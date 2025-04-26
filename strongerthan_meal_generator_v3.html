@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StrongerThan's Meal Idea Generator</title>
+  <style>
+    body { font-family: 'Arial', sans-serif; background-color: #f0f8ff; padding: 20px; text-align: center; }
+    h1 { color: #333; }
+    button, select { padding: 12px 24px; font-size: 16px; margin: 10px; border: none; border-radius: 8px; cursor: pointer; }
+    button { background-color: #ff7f50; color: white; }
+    select { background-color: #ffffff; border: 2px solid #ff7f50; color: #333; }
+    .meal, .shopping-list { margin-top: 30px; }
+    .card-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; }
+    .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 6px 15px rgba(0,0,0,0.1); width: 300px; text-align: left; }
+    .card h3 { margin-bottom: 10px; color: #444; }
+    .card ul { padding-left: 20px; list-style: none; color: #555; }
+    .prep-tip { margin-top: 15px; font-style: italic; color: #666; }
+    .shopping-list ul { list-style: none; font-size: 18px; padding: 0; }
+    .section-header { margin-top: 20px; font-size: 22px; color: #555; }
+    .gold-star { font-size: 24px; color: gold; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>🍴 StrongerThan's Meal Idea Generator</h1>
+
+  <p>Choose how many meals to generate:</p>
+  <select id="mealCount">
+    <option value="1">1 Meal</option>
+    <option value="2">2 Meals</option>
+    <option value="3">3 Meals</option>
+  </select>
+
+  <br>
+  <button onclick="generateMeals()">Generate Meal(s) 🍽️</button>
+  <button onclick="copyToClipboard()">Copy Meal Plan 📋</button>
+
+  <div id="result"></div>
+  <div class="shopping-list" id="shoppingList"></div>
+
+<script>
+// ===== DATABASE =====
+
+const cuisines = [
+  { name: 'Italian 🇮🇹', seasonings: ['Basil', 'Oregano', 'Garlic', 'Olive Oil', 'Rosemary', 'Thyme', 'Parsley', 'Red Pepper Flakes'] },
+  { name: 'Greek 🇬🇷', seasonings: ['Dill', 'Oregano', 'Mint', 'Lemon', 'Olive Oil', 'Garlic', 'Parsley', 'Cinnamon'] },
+  { name: 'Spanish 🇪🇸', seasonings: ['Smoked Paprika', 'Saffron', 'Garlic', 'Olive Oil', 'Parsley', 'Bay Leaf', 'Rosemary', 'Pimentón'] },
+  { name: 'Latin American 🇲🇽', seasonings: ['Cilantro', 'Cumin', 'Lime', 'Chili Powder', 'Garlic', 'Oregano', 'Smoked Paprika', 'Epazote'] },
+  { name: 'Middle Eastern 🌍', seasonings: ['Sumac', 'Cumin', 'Coriander', 'Mint', 'Tahini', 'Lemon', 'Allspice', 'Turmeric'] },
+  { name: 'African 🌍', seasonings: ['Berbere', 'Turmeric', 'Coriander', 'Cumin', 'Cinnamon', 'Paprika', 'Cloves', 'Fenugreek'] },
+  { name: 'Indian 🇮🇳', seasonings: ['Turmeric', 'Cumin', 'Coriander', 'Ginger', 'Garlic', 'Garam Masala', 'Mustard Seeds', 'Fenugreek'] },
+  { name: 'Japanese 🇯🇵', seasonings: ['Soy Sauce', 'Miso', 'Sesame Seeds', 'Ginger', 'Scallions', 'Wasabi', 'Mirin', 'Rice Vinegar'] },
+  { name: 'Korean 🇰🇷', seasonings: ['Gochujang', 'Sesame Oil', 'Soy Sauce', 'Garlic', 'Green Onion', 'Korean Chili Flakes', 'Vinegar'] },
+  { name: 'American Classic 🇺🇸', seasonings: ['Black Pepper', 'Garlic', 'Sage', 'Thyme', 'Paprika', 'Mustard', 'BBQ Spice', 'Chili Powder'] }
+];
+
+const proteins = ['Chicken', 'Lamb', 'Fish', 'Tempeh', 'Turkey', 'Beef', 'Pork', 'Duck', 'Tofu'];
+
+const carbs = ['Farro', 'Quinoa', 'Whole-grain Rice', 'Barley', 'Corn', 'Beans', 'Sweet Potatoes', 'Plantains', 'Potatoes', 'Whole-grain Bread', 'Buckwheat', 'Millet', 'Sweet Corn'];
+
+const fruits = [
+  'Blueberries', 'Strawberries', 'Blackberries', 'Raspberries', 'Apples', 'Pears', 'Peaches', 'Grapefruit', 'Cherries',
+  'Bananas', 'Watermelon', 'Mango', 'Pineapple', 'Grapes', 'Oranges'
+];
+
+const vegetables = [
+  'Spinach', 'Kale', 'Broccoli', 'Green Peas', 'Tomato', 'Red Cabbage', 'Carrots', 'Sweet Potatoes',
+  'Corn', 'Garlic', 'Onions', 'Cauliflower', 'Parsnips', 'Beets', 'Eggplant', 'Purple Cabbage',
+  'Zucchini', 'Asparagus', 'Brussels Sprouts', 'Cabbage', 'Celery', 'Collard Greens', 'Cucumbers',
+  'Fennel', 'Leeks', 'Lettuce', 'Mushrooms', 'Okra', 'Peppers', 'Radishes', 'Squash', 'Turnips', 'Yams'
+];
+
+const fats = ['Olive Oil', 'Feta Cheese', 'Olives', 'Avocado', 'Nut Butters', 'Sesame Oil', 'Cashews', 'Butter', 'Cheese'];
+
+const cushions = [
+  'Tahini', 'Olive Oil', 'Butter', 'Avocado Oil', 'Coconut Oil', 'Ghee', 'Soft Cheese', 'Chopped Almonds', 'Chopped Walnuts', 'Chopped Peanuts'
+];
+
+const complements = [
+  'Lemon Juice', 'Balsamic Vinegar', 'Honey', 'Garlic Cloves', 'Cumin', 'Smoked Paprika', 'Fresh Chiles', 'Preserved Lemon', 'Pickled Vegetables'
+];
+
+const cookingMethods = ['Sautéed', 'Roasted', 'Steamed', 'Grilled'];
+
+const prepTips = [
+  "🥑 Fun Fact: Avocados are rich in heart-healthy monounsaturated fats.",
+  "🌽 Tip: Simmer fresh corn kernels lightly to preserve crunch.",
+  "🍇 Storage Tip: Keep blueberries dry and refrigerated.",
+  "🥦 Prep Tip: Steam broccoli until vibrant green, then shock in cold water.",
+  "🍚 Cooking Tip: Rinse quinoa before cooking to remove bitterness.",
+  "🍅 Fun Fact: Tomatoes are rich in lycopene, a powerful antioxidant.",
+  "🍠 Storage Tip: Store sweet potatoes in a cool, dark place.",
+  "🥬 Prep Tip: Massage kale leaves with olive oil for better texture."
+];
+
+const bonusTips = [
+  "💬 Bonus Tip: Add a side of sauerkraut or kimchi for gut health.",
+  "💬 Bonus Tip: A few bites of plain yogurt can boost digestion.",
+  "💬 Bonus Tip: Add a tablespoon of miso paste to soups for probiotics."
+];
+
+const funFacts = [
+  "📚 Fun Fact: Broccoli contains more protein per calorie than steak.",
+  "📚 Fun Fact: Garlic has natural antibacterial properties.",
+  "📚 Fun Fact: Spinach was first cultivated over 2,000 years ago.",
+  "📚 Fun Fact: Sweet potatoes provide vitamin A for healthy vision."
+];
+// ===== LOGIC =====
+let generatedText = '';
+let shoppingItems = [];
+
+function getRandomItem(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+function getRandomItems(array, count) {
+  const shuffled = [...array].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
+function generateMealHTML(cuisine, protein, carb, fat, veggies, mealNumber, colorsUsed) {
+  let mealColors = new Set(colorsUsed);
+  let starAward = mealColors.size >= 3 ? "<div class='gold-star'>🌟 Chef's Gold Star: Colorful Meal!</div>" : "";
+
+  let mealText = `Meal ${mealNumber}:\nCuisine: ${cuisine.name}\nProtein: ${protein}\nCarb: ${carb}\nFat: ${fat}\nVeggies:\n${veggies.map((v, i) => `${i + 1}. ${v.description}`).join('\n')}\n\n`;
+  generatedText += mealText;
+
+  shoppingItems.push(protein, carb, fat);
+  veggies.forEach(v => shoppingItems.push(v.name));
+
+  const prepTip = getRandomItem(prepTips);
+  const bonusTip = getRandomItem(bonusTips);
+  const funFact = getRandomItem(funFacts);
+
+  return `
+    <div class='meal'>
+      <h2>Meal ${mealNumber} 🍽️</h2>
+      <h3>Cuisine Style: ${cuisine.name}</h3>
+      <p><strong>Protein:</strong> ${protein}</p>
+      <p><strong>Carbohydrate:</strong> ${carb}</p>
+      <p><em>Optional: You may swap your carb for a fresh fruit:</em></p>
+      <select>
+        ${fruits.map(fruit => `<option>${fruit}</option>`).join('')}
+      </select>
+      <p><strong>Fat:</strong> ${fat}</p>
+      <div class='card-container'>
+        <div class='card'>
+          <h3>🥦 Vegetables</h3>
+          <ul>
+            ${veggies.map((v, i) => `<li><strong>${i + 1}.</strong> ${v.description}<br><em>Cushion:</em> ${v.cushion} | <em>Complement:</em> ${v.complement}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div class='section-header'>🍋 Recommended Seasonings:</div>
+      <p>${cuisine.seasonings.join(', ')}</p>
+      <div class='prep-tip'>💡 ${prepTip}</div>
+      <div class='prep-tip'>${bonusTip}</div>
+      <div class='prep-tip'>${funFact}</div>
+      ${starAward}
+    </div>
+  `;
+}
+
+function generateMeals() {
+  generatedText = '';
+  shoppingItems = [];
+  const mealCount = parseInt(document.getElementById('mealCount').value);
+  let html = '';
+
+  for (let i = 1; i <= mealCount; i++) {
+    const cuisineType = getRandomItem(cuisines);
+    const protein = getRandomItem(proteins);
+    const carb = getRandomItem(carbs);
+    const fat = getRandomItem(fats);
+
+    const vegCount = Math.floor(Math.random() * 3) + 1;
+    const veggiesSelected = getRandomItems(vegetables, vegCount).map(veg => {
+      return {
+        name: veg,
+        description: `${getRandomItem(cookingMethods)} ${veg}`,
+        cushion: getRandomItem(cushions),
+        complement: getRandomItem(complements),
+        color: assignColor(veg)
+      };
+    });
+
+    const colorsUsed = veggiesSelected.map(v => v.color);
+    html += generateMealHTML(cuisineType, protein, carb, fat, veggiesSelected, i, colorsUsed);
+  }
+
+  document.getElementById('result').innerHTML = html;
+  generateShoppingList();
+  addPortionGuide();
+}
+
+function assignColor(veg) {
+  if (veg.includes('Spinach') || veg.includes('Kale') || veg.includes('Broccoli') || veg.includes('Green Peas') || veg.includes('Asparagus') || veg.includes('Zucchini') || veg.includes('Brussels Sprouts')) {
+    return 'Green';
+  }
+  if (veg.includes('Tomato') || veg.includes('Red Cabbage') || veg.includes('Cherries') || veg.includes('Peppers')) {
+    return 'Red';
+  }
+  if (veg.includes('Carrots') || veg.includes('Sweet Potatoes') || veg.includes('Corn') || veg.includes('Mango') || veg.includes('Squash')) {
+    return 'Yellow';
+  }
+  if (veg.includes('Garlic') || veg.includes('Onions') || veg.includes('Cauliflower') || veg.includes('Parsnips') || veg.includes('Turnips')) {
+    return 'White';
+  }
+  if (veg.includes('Blueberries') || veg.includes('Beets') || veg.includes('Eggplant') || veg.includes('Purple Cabbage')) {
+    return 'Purple';
+  }
+  return 'Other';
+}
+
+function generateShoppingList() {
+  const uniqueItems = [...new Set(shoppingItems.map(item => item.trim()))];
+  document.getElementById('shoppingList').innerHTML = `
+    <h2>🛒 Shopping List</h2>
+    <ul>${uniqueItems.map(item => `<li>${item}</li>`).join('')}</ul>
+  `;
+}
+
+function copyToClipboard() {
+  navigator.clipboard.writeText(generatedText).then(() => {
+    alert('Meal plan copied to clipboard! 📋');
+  });
+}
+
+function addPortionGuide() {
+  const guide = `
+    <div style="margin-top:20px; font-size:16px; color:#555;">
+      📏 <strong>Meal Building Tip:</strong><br>
+      Use your hand as a guide:<br>
+      🖐️ 1 palm = Protein | ✊ 1 fist = Vegetables | 🤲 1 cupped hand = Carbs | 👍 1 thumb = Healthy Fats
+    </div>
+  `;
+  document.getElementById('shoppingList').insertAdjacentHTML('beforeend', guide);
+}
+// ===== END LOGIC =====
+</script>
